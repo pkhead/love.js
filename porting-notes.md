@@ -1,5 +1,5 @@
 # love.js porting notes
-- `love.audio.play`, `love.audio.stop`, and `love.audio.pause` result in
+- when built with Emscripten 2.0.0, `love.audio.play`, `love.audio.stop`, and `love.audio.pause` result in
   crashes. you must use `Source:play`, `Source:stop`, and `Source:pause`.
 - unpack is replaced with table.unpack in lua 5.2
 - since rgba8 on canvases is not supported for whatever reason, "normal" pixel
