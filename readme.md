@@ -2,6 +2,13 @@ Love.js for LÖVE v11.5
 ============
 Basically trying to adapt [love.js](https://github.com/TannerRogalsky/love.js) to the latest and greatest versions of LÖVE and Emscripten.
 
+This fork introduces the following changes:
+- Uses Lua 5.2 instead of 5.1, allowing you to use goto and the bit32 library. However, breaking changes have been made to
+  function environment manipulation.
+- Updated to Emscripten 4.x (see [emscripten-upgrade.md](emscripten-upgrade.md))
+- Uses WASM exceptions. LOVE errors work properly now with little performance compromise.
+- [Doc for LOVE.js porting tips](porting-notes.md)
+
 ## Demos
  * [Specification Test](https://davidobot.net/lovejs/lovejs_spec/); [(Compatibility Version)](https://davidobot.net/lovejs/lovejs_spec_c/) (threads, coroutines, shaders!)
  * [Another Kind of World](https://davidobot.net/lovejs/akow/); [(Compatibility Version)](https://davidobot.net/lovejs/akow_c/)
