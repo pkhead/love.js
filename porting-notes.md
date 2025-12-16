@@ -8,7 +8,7 @@
 ## code snippets
 ### canvas pixel format fix
 ```lua
-local supported_formats = Lg.getCanvasFormats()
+local supported_formats = love.graphics.getCanvasFormats()
 local format_check_list = {
     "rgba8",
     "srgba8",
