@@ -3,11 +3,12 @@ Love.js for LÖVE v11.5
 Basically trying to adapt [love.js](https://github.com/TannerRogalsky/love.js) to the latest and greatest versions of LÖVE and Emscripten.
 
 This fork introduces the following changes:
-- Uses Lua 5.2 instead of 5.1, allowing you to use goto and the bit32 library. However, breaking changes have been made to
-  function environment manipulation.
-- Updated to Emscripten 4.x (see [emscripten-upgrade.md](emscripten-upgrade.md))
+- Uses Lua 5.2 instead of 5.1, allowing you to use goto and the bit32 library, at the expense of certain breaking changes
+  (see `webcompat` folder).
+- Provided in the `webcompat` folder are reverse-polyfills, which let you use Lua 5.1/JIT functions in Lua 5.2, as well as
+  workarounds for WebGL graphics quirks.
+- Updated to Emscripten 4.x (see the [forked megasource](https://github.com/goodpants-games/love-megasource/tree/emscripten))
 - Uses WASM exceptions. LOVE errors work properly now with little performance compromise.
-- [Doc for LOVE.js porting tips](porting-notes.md)
 
 ## Demos
  * [Specification Test](https://davidobot.net/lovejs/lovejs_spec/); [(Compatibility Version)](https://davidobot.net/lovejs/lovejs_spec_c/) (threads, coroutines, shaders!)
@@ -24,12 +25,12 @@ Build a game with the compatibility version.
 ## Installation
 Install the package from `npm`; no need to download this repo:
 ```
-npm i love.js
+npm i git+https://github.com/pkhead/love.js.git#lua52
 ```
 
 or _globally_:
 ```
-npm -g i love.js
+npm -g i git+https://github.com/pkhead/love.js.git#lua52
 ```
 
 ## Usage
@@ -106,21 +107,21 @@ return texturecolor * color / 2.0;
 
 ## Building
 ### MacOS / Linux
-Clone the [megasource](https://github.com/Davidobot/megasource/tree/emscripten) and [love](https://github.com/Davidobot/love/tree/emscripten) and then run `build_lovejs.sh` (with minor changes for file paths).
+Clone the [megasource](https://github.com/goodpants-games/love-megasource/tree/emscripten) and [love](https://github.com/goodpants-games/love/tree/emscripten) and then run `build_lovejs.sh` (with minor changes for file paths).
 
 That should just work™. Make sure you have CMake installed, clone [emsdk](https://github.com/emscripten-core/emsdk) and edit `build_lovejs.sh` to point to the right paths.
 
 Set up emsdk with the following settings:
 
 ``` bash
-./emsdk install 2.0.0
-./emsdk activate 2.0.0
+./emsdk install 4.0.19
+./emsdk activate 4.0.19
 ```
 
-Note, using v:2.0.0 is important as newer versions have depreciated `getMemory`
+Note, using this verison is important because later versions at some point somehow break compilation i'm not sure how i'll investigate it later.
 
 
 ### Windows
-Clone the [megasource](https://github.com/Davidobot/megasource/tree/emscripten) and [love](https://github.com/Davidobot/love/tree/emscripten) and then run `build_lovejs.bat` (with minor changes for file paths) in PowerShell.
+Clone the [megasource](https://github.com/goodpants-games/love-megasource/tree/emscripten) and [love](https://github.com/goodpants-games/love/tree/emscripten) and then run `build_lovejs.bat` (with minor changes for file paths) in PowerShell.
 
 Make sure you have CMake and Make (e.g. through [chocolatey](https://chocolatey.org/packages/make)), and that you have the latest Visual Studio build bundles installed. Clone [emsdk](https://github.com/emscripten-core/emsdk) and edit `build_lovejs.bat` to point to the right paths.
