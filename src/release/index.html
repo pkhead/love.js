@@ -87,6 +87,16 @@
           this.remainingDependencies = left;
           this.totalDependencies = Math.max(this.totalDependencies, left);
           Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+        },
+		onRuntimeInitialized: function() {
+          let al = Module.AL;
+          document.addEventListener('visibilitychange', (e) => {
+            if (document.hidden) {
+              al.currentCtx.audioCtx.suspend();
+            } else {
+              al.currentCtx.audioCtx.resume();
+            }
+          });
         }
       };
       Module.setStatus('Downloading...');
