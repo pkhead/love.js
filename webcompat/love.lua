@@ -14,73 +14,6 @@ AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 --]]
 
--- "normal" (i.e. "rgba8"), for some odd reason, may not be supported. This
--- function intercepts love.graphics.newCanvas to fall back to a different but
--- supported pixel format with equal or higher precision whenever a canvas with
--- the "normal" pixel format is created.
--- (i think srgba8 is exactly equivalent to rgba8?)
-local function canvas_format_fix()
-    local supported_formats = love.graphics.getCanvasFormats()
-    local format_check_list = {
-        "rgba8",
-        "srgba8",
-        "rgba16",
-        "rgba16f",
-        "rgba32f",
-
-        -- seems to unconditionally be supported, but as it is 16-bit color
-        -- the game will look very off. i think.
-        "rgba4",
-    }
-
-    local use_format
-    for _, v in ipairs(format_check_list) do
-        if supported_formats[v] then
-            use_format = v
-            break
-        end
-    end
-
-    if use_format == "rgba4" then
-        print("WARNING: Could not find suitable default canvas pixel format. Falling back to rgba4.")
-    end
-
-    local orig_newCanvas = love.graphics.newCanvas
-    local default_settings = { format = use_format }
-
-    local function fix_settings(s)
-        if s == nil then
-            s = default_settings
-        elseif s.format == "normal" or s.format == nil then
-            local old_s = s
-            s = {}
-            for k,v in pairs(old_s) do
-                s[k] = v
-            end
-            s.format = use_format
-        end
-
-        return s
-    end
-
-    ---@diagnostic disable-next-line
-    function love.graphics.newCanvas(w, h, l, s)
-        if w == nil then
-            w = love.graphics.getWidth()
-        end
-
-        if h == nil then
-            h = love.graphics.getHeight()
-        end
-
-        if type(l) == "number" then
-            return orig_newCanvas(w, h, l, fix_settings(s))
-        else
-            return orig_newCanvas(w, h, fix_settings(l))
-        end
-    end
-end
-
 -- Some WebGL implementations (namely, at the time of writing, D3D11 Firefox)
 -- refuses to compile shaders with varyings declared after the main function.
 -- This means custom vertex shaders cannot declare new attributes without
@@ -130,6 +63,5 @@ local function shader_varying_fix()
 end
 
 if love.system.getOS() == "Web" then
-    canvas_format_fix()
     shader_varying_fix()
 end
