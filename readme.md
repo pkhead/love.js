@@ -7,7 +7,7 @@ This fork introduces the following changes:
   (see `webcompat` folder).
 - Provided in the `webcompat` folder are reverse-polyfills, which let you use Lua 5.1/JIT functions in Lua 5.2, as well as
   workarounds for WebGL graphics quirks.
-- Updated to Emscripten 4.x (see the [forked megasource](https://github.com/goodpants-games/love-megasource/tree/emscripten-ext))
+- Updated to Emscripten 4.x (see the [forked LOVE](https://github.com/goodpants-games/love/tree/emscripten-ext))
 - Uses WASM exceptions. LOVE errors work properly now with little performance compromise.
 - C extensions system via static linking (see [Linking Lua C libraries](#linking-lua-c-libraries))
 
