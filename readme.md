@@ -7,8 +7,9 @@ This fork introduces the following changes:
   (see `webcompat` folder).
 - Provided in the `webcompat` folder are reverse-polyfills, which let you use Lua 5.1/JIT functions in Lua 5.2, as well as
   workarounds for WebGL graphics quirks.
-- Updated to Emscripten 4.x (see the [forked megasource](https://github.com/goodpants-games/love-megasource/tree/emscripten))
+- Updated to Emscripten 4.x (see the [forked megasource](https://github.com/goodpants-games/love-megasource/tree/emscripten-ext))
 - Uses WASM exceptions. LOVE errors work properly now with little performance compromise.
+- C extensions system via static linking (see [Linking Lua C libraries](#linking-lua-c-libraries))
 
 ## Demos
  * [Specification Test](https://davidobot.net/lovejs/lovejs_spec/); [(Compatibility Version)](https://davidobot.net/lovejs/lovejs_spec_c/) (threads, coroutines, shaders!)
@@ -55,17 +56,44 @@ You can also replace `love.js` in the above command with `index.js` (or ` node i
 
 ## Options:
 ```
--h, --help            output usage information
 -V, --version         output the version number
 -t, --title <string>  specify game name
 -m, --memory [bytes]  how much memory your game will require [16777216]
 -c, --compatibility   specify flag to use compatibility version
+
+--custom <path>       path to .js file containing custom LOVE runtime
+--emcc-args           print compilation args to build an extended runtime, then exit
+--emsdk-version       print emsdk version used to build the extensible runtime, then exit
+
+-h, --help            output usage information
 ```
 
 ### Test it
 1. Run a web server (while `cd`-ed into the `<output>` folder):
   - eg: `python -m http.server 8000`
 2. Open `localhost:8000` in the browser of your choice.
+
+## Linking Lua C libraries
+
+To statically link LOVE with custom C libraries, you will need Emscripten. Your version of emsdk should match, or at
+least be binary-compatible with, the emsdk version printed in `love.js --emsdk-version`.
+
+First, your source files should declare the entry point
+```c
+int luaopen_lovex(lua_State *L)
+```
+You will load this by calling `require("lovex")` within your Lua code.
+
+Then, build the extended LOVE runtime by running:
+```bash
+emcc $(love.js --emcc-args -c) <...> -o path/to/custom/love.js
+```
+This should compile a binary linked with a statically compiled version of LOVE. Substitute `<...>` with your desired
+build flags and source/object files. Remove `-c` if you want to link it against the release build instead of the
+compatibility build.
+
+Finally, to create a love.js game with this custom runtime, run the regular command with the additional argument
+`--custom path/to/custom/love.js`.
 
 ## Notes
 1. Compatibility version (`-c`) should work with most browsers. The difference is that pthreads aren't used. This results in *dodgy audio*. 
