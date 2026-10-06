@@ -21,11 +21,14 @@ source ${EMSDK}/emsdk_env.sh
 
 (
   cd build/release
-  emcmake cmake ${MEGASOURCE} -DLOVE_JIT=0 -DCMAKE_BUILD_TYPE=Release
+  emcmake cmake ${MEGASOURCE} -DLOVE_JIT=0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
   emmake make -j 6
   cp love/love.js* ../../src/release
   cp love/love.wasm ../../src/release
   cp love/love.worker.js ../../src/release
+  cp love/libxlove.a ../../src/release_ext
+  cp love/build_flags.txt ../../src/release_ext
+  cp love/emsdk_version.txt ../../src/release_ext
 )
 
 (
@@ -34,4 +37,7 @@ source ${EMSDK}/emsdk_env.sh
   emmake make -j 6
   cp love/love.js* ../../src/compat
   cp love/love.wasm ../../src/compat
+  cp love/libxlove.a ../../src/compat_ext
+  cp love/build_flags.txt ../../src/compat_ext
+  cp love/emsdk_version.txt ../../src/compat_ext
 )
