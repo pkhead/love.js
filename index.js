@@ -4,14 +4,18 @@ const commander = require('commander');
 const mustache = require('mustache');
 const fs = require('fs-extra');
 const klawSync = require('klaw-sync');
-const { sep, resolve } = require('path');
+const mpath = require('path');
 const uuid = require('uuid');
+const process = require('process');
 
 commander
   .version(packageJson.version)
   .option('-t, --title <string>', 'specify game name')
   .option('-m, --memory [bytes]', 'how much memory your game will require [16777216]', 16777216)
   .option('-c, --compatibility', 'specify flag to use compatibility version')
+  .option('--custom <path>', 'path to .js file containing custom LOVE runtime')
+  .option('--emcc-args', 'print compilation args to build an extended runtime, then exit')
+  .option('--emsdk-version', 'print emsdk version used to build the extensible runtime, then exit')
   .arguments('<input> <output>')
   .action((input, output) => {
     commander.input = input;
@@ -43,14 +47,22 @@ const getAdditionalInfo = async function getAdditionalInfo(parsedArgs) {
     output: parsedArgs.output,
     compat: parsedArgs.compatibility,
   };
-  args.input = parsedArgs.input || await prompt('Love file or directory: ');
-  args.output = parsedArgs.output || await prompt('Output directory: ');
-  args.title = parsedArgs.title || await prompt('Game name: ');
 
-  if (isDirectory(args.input)) {
-    args.arguments = JSON.stringify(['./']);
-  } else {
-    args.arguments = JSON.stringify(['./game.love']);
+  args.emccArgs = parsedArgs.emccArgs;
+  args.emsdkVersion = parsedArgs.emsdkVersion;
+
+  if (!args.emccArgs && !args.emsdkVersion) {
+    args.input = parsedArgs.input || await prompt('Love file or directory: ');
+    args.output = parsedArgs.output || await prompt('Output directory: ');
+    args.title = parsedArgs.title || await prompt('Game name: ');
+
+    if (isDirectory(args.input)) {
+      args.arguments = JSON.stringify(['./']);
+    } else {
+      args.arguments = JSON.stringify(['./game.love']);
+    }
+
+    args.custom = parsedArgs.custom;
   }
 
   return args;
@@ -63,21 +75,51 @@ const getFiles = function getFiles(input) {
   }
   // It should be a .love file
   return [{
-    path: resolve(input),
+    path: mpath.resolve(input),
     stats,
   }];
 };
 
 getAdditionalInfo(commander).then((args) => {
-  const outputDir = resolve(args.output);
-  const srcDir = resolve(__dirname, 'src');
+  const srcDir = mpath.resolve(__dirname, 'src');
+  const fldr_name = args.compat ? "compat" : "release";
+
+  // handle emsdk-version switch
+  if (args.emsdkVersion) {
+    const versionFile = mpath.join(srcDir, fldr_name + '_ext', 'emsdk_version.txt');
+    const version = fs.readFileSync(versionFile, 'utf-8').trim();
+    process.stdout.write(version + '\n', 'utf-8');
+    return;
+  }
+
+  // handle emcc-args switch
+  if (args.emccArgs) {
+    const argsFile = mpath.join(srcDir, fldr_name + '_ext', 'build_flags.txt');
+    const initialArgs =
+      fs.readFileSync(argsFile, 'utf-8')
+      .split('\n')
+      .map(v => v.trim());
+    const cmdArgs = [
+      ...initialArgs,
+      `--post-js ${mpath.join(srcDir, 'post_js.js')}`,
+      mpath.join(srcDir, fldr_name + '_ext', 'libxlove.a'),
+    ];
+
+    for (const arg of cmdArgs) {
+      process.stdout.write(arg + '\n', 'utf-8');
+    }
+    return;
+  }
+
+  // normal processing
+  const outputDir = mpath.resolve(args.output);
 
   const files = getFiles(args.input);
   const dirs = isDirectory(args.input) ? klawSync(args.input, { nofile: true }) : [];
   const dirRelativePaths = dirs.map(f => f.path.replace(new RegExp(`^.*${args.input}`), ''));
 
   const createFilePaths = dirRelativePaths.map((path) => {
-    const splits = path.split(sep);
+    const splits = path.split(mpath.sep);
     const length = splits.length - 1;
     const directoryPath = splits.slice(0, length).join('/') || '/';
     return `Module['FS_createPath']('${directoryPath}', '${splits[length]}', true, true);`;
@@ -125,8 +167,6 @@ getAdditionalInfo(commander).then((args) => {
 
   fs.mkdirsSync(`${outputDir}`);
 
-  const fldr_name = args.compat ? "compat" : "release";
-
   {
     const template = fs.readFileSync(`${srcDir}/${fldr_name}/index.html`, 'utf8');
     const renderedTemplate = mustache.render(template, args);
@@ -135,12 +175,28 @@ getAdditionalInfo(commander).then((args) => {
     fs.writeFileSync(`${outputDir}/index.html`, renderedTemplate);
     fs.writeFileSync(`${outputDir}/game.js`, renderedGameTemplate);
     fs.writeFileSync(`${outputDir}/game.data`, totalBuffer);
-    fs.copySync(`${srcDir}/${fldr_name}/love.js`, `${outputDir}/love.js`);
-    fs.copySync(`${srcDir}/${fldr_name}/love.wasm`, `${outputDir}/love.wasm`);
     fs.copySync(`${srcDir}/${fldr_name}/theme`, `${outputDir}/theme`);
 
-    if (fldr_name === "release") {
-      fs.copySync(`${srcDir}/${fldr_name}/love.worker.js`, `${outputDir}/love.worker.js`);
+    if (args.custom) {
+      const pathData = mpath.parse(args.custom);
+      if (pathData.name !== 'love') {
+        console.error('error: Custom LOVE runtime must be named love.js.')
+        process.exit(1);
+      }
+
+      const name = mpath.join(pathData.dir, pathData.name);
+
+      fs.copySync(name + '.js', mpath.join(outputDir, 'love.js'));
+      fs.copySync(name + '.wasm', mpath.join(outputDir, 'love.wasm'));
+      if (fldr_name == 'release') {
+        fs.copySync(name + '.worker.js', mpath.join(outputDir, 'love.worker.js'));
+      }
+    } else {
+      fs.copySync(`${srcDir}/${fldr_name}/love.js`, `${outputDir}/love.js`);
+      fs.copySync(`${srcDir}/${fldr_name}/love.wasm`, `${outputDir}/love.wasm`);
+      if (fldr_name === "release") {
+        fs.copySync(`${srcDir}/${fldr_name}/love.worker.js`, `${outputDir}/love.worker.js`);
+      }
     }
   }
 }).catch((e) => {
