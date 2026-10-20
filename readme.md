@@ -7,7 +7,7 @@ This fork introduces the following changes:
   (see `webcompat` folder).
 - Provided in the `webcompat` folder are reverse-polyfills, which let you use Lua 5.1/JIT functions in Lua 5.2, as well as
   workarounds for WebGL graphics quirks.
-- Updated to Emscripten 4.x (see the [forked LOVE](https://github.com/goodpants-games/love/tree/emscripten-ext))
+- Updated to Emscripten 6.x (see the [forked LOVE](https://github.com/goodpants-games/love/tree/emscripten-ext))
 - Uses WASM exceptions. LOVE errors work properly now with little performance compromise.
 - C extensions system via static linking (see [Linking Lua C libraries](#linking-lua-c-libraries))
 
@@ -142,11 +142,9 @@ That should just work™. Make sure you have CMake installed, clone [emsdk](http
 Set up emsdk with the following settings:
 
 ``` bash
-./emsdk install 4.0.19
-./emsdk activate 4.0.19
+./emsdk install 6.0.1
+./emsdk activate 6.0.1
 ```
-
-Note, using this verison is important because later versions at some point somehow break compilation i'm not sure how i'll investigate it later.
 
 
 ### Windows
