@@ -168,14 +168,13 @@ getAdditionalInfo(commander).then((args) => {
   fs.mkdirsSync(`${outputDir}`);
 
   {
-    const template = fs.readFileSync(`${srcDir}/${fldr_name}/index.html`, 'utf8');
+    const template = fs.readFileSync(`${srcDir}/html/index.html`, 'utf8');
     const renderedTemplate = mustache.render(template, args);
 
     fs.mkdirsSync(outputDir);
     fs.writeFileSync(`${outputDir}/index.html`, renderedTemplate);
     fs.writeFileSync(`${outputDir}/game.js`, renderedGameTemplate);
     fs.writeFileSync(`${outputDir}/game.data`, totalBuffer);
-    fs.copySync(`${srcDir}/${fldr_name}/theme`, `${outputDir}/theme`);
 
     if (args.custom) {
       const pathData = mpath.parse(args.custom);

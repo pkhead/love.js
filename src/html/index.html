@@ -5,18 +5,19 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, minimum-scale=1, maximum-scale=1">
     <title>{{title}}</title>
-
-    <!-- Load custom style sheet -->
-    <link rel="stylesheet" type="text/css" href="theme/love.css">
+    
+    <style>
+      /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+      #canvas, #loadingCanvas {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+    </style>
   </head>
   <body>
-    <center>
-      <div>
-        <h1>{{title}}</h1>
-        <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="800" height="600"></canvas>
-        <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
-      </div>
-    </center>
+    <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()" width="800" height="600"></canvas>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
 
     <script type='text/javascript'>
       function goFullScreen(){
@@ -34,7 +35,11 @@
         canvas.height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
       }
       var loadingContext = document.getElementById('loadingCanvas').getContext('2d');
+      var currentLoadingText;
       function drawLoadingText(text) {
+        if (text !== undefined)
+          currentLoadingText = text;
+        
         var canvas = loadingContext.canvas;
 
         loadingContext.fillStyle = "rgb(142, 195, 227)";
@@ -43,10 +48,7 @@
         loadingContext.font = '2em arial';
         loadingContext.textAlign = 'center'
         loadingContext.fillStyle = "rgb( 11, 86, 117 )";
-        loadingContext.fillText(text, canvas.scrollWidth / 2, canvas.scrollHeight / 2);
-
-        loadingContext.fillText("Powered By Emscripten.", canvas.scrollWidth / 2, canvas.scrollHeight / 4);
-        loadingContext.fillText("Powered By LÖVE.", canvas.scrollWidth / 2, canvas.scrollHeight / 4 * 3);
+        loadingContext.fillText(currentLoadingText, canvas.scrollWidth / 2, canvas.scrollHeight / 2);
       }
 
       window.onload = function () { window.focus(); };
@@ -58,6 +60,26 @@
           e.preventDefault();
         }
       }, false);
+
+      function resizeToFill() {
+        let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        let h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+
+        let canvas = document.getElementById("canvas");
+        let loadingCanvas = document.getElementById('loadingCanvas')
+
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        loadingCanvas.width = w * window.devicePixelRatio;
+        loadingCanvas.height = h * window.devicePixelRatio;
+        loadingCanvas.style.width = w + "px";
+        loadingCanvas.style.height = h + "px";
+
+        drawLoadingText();
+      }
+
+      window.addEventListener("resize", resizeToFill);
+      resizeToFill();
 
       var Module = {
         arguments: {{{arguments}}},
@@ -74,6 +96,7 @@
           return canvas;
         })(),
         setStatus: function(text) {
+          console.log(Module.remainingDependencies, text);
           if (text) {
             drawLoadingText(text);
           } else if (Module.remainingDependencies === 0) {
@@ -88,7 +111,10 @@
           this.totalDependencies = Math.max(this.totalDependencies, left);
           Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
         },
-		onRuntimeInitialized: function() {
+        onRuntimeInitialized: function() {
+          document.getElementById('loadingCanvas').style.display = 'none';
+          document.getElementById('canvas').style.visibility = 'visible';
+
           let al = Module.AL;
           document.addEventListener('visibilitychange', (e) => {
             if (document.hidden) {
@@ -114,8 +140,5 @@
     </script>
     <script type="text/javascript" src="game.js"></script>
     <script async type="text/javascript" src="love.js" onload="applicationLoad(this)"></script>
-    <footer>
-      <p>Built with <a href="https://github.com/Davidobot/love.js">love.js</a> <button onclick="goFullScreen();">Go Fullscreen</button><br>Hint: Reload the page if screen is blank</p>
-    </footer>
   </body>
 </html>
